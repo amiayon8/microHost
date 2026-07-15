@@ -8,6 +8,30 @@ fi
 REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+echo "=== MicroHost Configuration ==="
+read -p "Enter the Domain name for MicroHost [default: localhost]: " DOMAIN
+DOMAIN=${DOMAIN:-localhost}
+
+read -p "Enter the public HTTP port for Nginx [default: 80]: " HTTP_PORT
+HTTP_PORT=${HTTP_PORT:-80}
+
+read -p "Enter the internal FastAPI port [default: 8000]: " API_PORT
+API_PORT=${API_PORT:-8000}
+
+read -p "Enter your VirusTotal API Key (optional): " VT_API_KEY
+
+echo
+echo "Configuring MicroHost with:"
+echo "  - Domain: $DOMAIN"
+echo "  - Public HTTP Port: $HTTP_PORT"
+echo "  - Internal API Port: $API_PORT"
+if [ -n "$VT_API_KEY" ]; then
+    echo "  - VirusTotal API: Enabled"
+else
+    echo "  - VirusTotal API: Disabled"
+fi
+echo
+
 echo "Updating system and installing dependencies..."
 sudo apt update && sudo apt upgrade -y
 sudo apt install nginx php-fpm clamav clamav-daemon python3-pip python3-venv -y
@@ -47,14 +71,18 @@ sudo systemctl restart "php${PHP_VERSION}-fpm"
 echo "Configuring Nginx for PHP hosting..."
 cat << EOF | sudo tee /etc/nginx/sites-available/phphost
 server {
-    listen 80;
-    server_name _;
+    listen $HTTP_PORT;
+    server_name $DOMAIN;
 
     root /var/www/apps;
     autoindex off;
 
     location / {
-        try_files \$uri \$uri/ =404;
+        proxy_pass http://127.0.0.1:$API_PORT;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
     location ~ ^/(status|ping)\$ {
@@ -81,7 +109,7 @@ sudo nginx -t
 sudo systemctl restart nginx
 
 echo "Creating Systemd service for FastAPI application..."
-cat << EOF | sudo tee /etc/systemd/system/microhost.service
+sudo tee /etc/systemd/system/microhost.service > /dev/null << EOF
 [Unit]
 Description=MicroHost FastAPI Backend
 After=network.target
@@ -90,7 +118,9 @@ After=network.target
 User=$REAL_USER
 Group=www-data
 WorkingDirectory=$REAL_HOME/microHost
-ExecStart=$REAL_HOME/microHost/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+Environment=DOMAIN=$DOMAIN
+$( [ -n "$VT_API_KEY" ] && echo "Environment=VIRUSTOTAL_API_KEY=$VT_API_KEY" )
+ExecStart=$REAL_HOME/microHost/venv/bin/uvicorn main:app --host 127.0.0.1 --port $API_PORT
 Restart=always
 
 [Install]
@@ -101,4 +131,4 @@ sudo systemctl daemon-reload
 sudo systemctl enable microhost.service
 sudo systemctl restart microhost.service
 
-echo "Installation and configuration complete. API running on port 8000"
+echo "Installation and configuration complete. API reverse-proxied through Nginx on http://$DOMAIN:$HTTP_PORT"
