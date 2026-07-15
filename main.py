@@ -13,7 +13,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Request, status, Security
 from fastapi.openapi.models import APIKeyIn, APIKey
 from fastapi.openapi.utils import get_openapi
-from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, Session
@@ -86,7 +86,7 @@ app.openapi = custom_openapi
 
 # === Security ===
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = HTTPBearer(auto_error=False)
 
 # ================== Database Models ==================
 class DBUser(Base):
@@ -182,12 +182,15 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(token_auth: Optional[HTTPAuthorizationCredentials] = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if not token_auth:
+        raise credentials_exception
+    token = token_auth.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -204,7 +207,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 async def authenticate_api_key(
     api_key: Optional[str] = Security(api_key_header),
-    token: Optional[str] = Depends(oauth2_scheme), 
+    token_auth: Optional[HTTPAuthorizationCredentials] = Depends(oauth2_scheme), 
     db: Session = Depends(get_db)
 ):
     if api_key:
@@ -216,8 +219,8 @@ async def authenticate_api_key(
             return owner
         raise HTTPException(status_code=401, detail="Invalid API key")
 
-    if token:
-        return get_current_user(token, db)
+    if token_auth:
+        return get_current_user(token_auth, db)
         
     raise HTTPException(status_code=401, detail="Not authenticated. Provide an X-API-KEY header or Bearer token.")
 
