@@ -4,11 +4,11 @@ set -e
 # Setup variables with defaults
 API_PORT="${API_PORT:-8000}"
 
-# Normalize line endings in case supervisord.conf was copied with CRLF from Windows
-sed -i 's/\r$//' /etc/supervisor/conf.d/supervisord.conf
+# Normalize line endings in case microhost.conf was copied with CRLF from Windows
+sed -i 's/\r$//' /etc/supervisor/conf.d/microhost.conf
 
 # Configure Uvicorn port dynamically in Supervisord config
-sed -i "s/--port 8000/--port $API_PORT/" /etc/supervisor/conf.d/supervisord.conf
+sed -i "s/--port 8000/--port $API_PORT/" /etc/supervisor/conf.d/microhost.conf
 
 # Initialize database directory permissions
 mkdir -p /app/data
@@ -25,5 +25,8 @@ fi
 
 # Start supervisord
 echo "Starting Supervisord..."
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+echo "--- DEBUG: microhost.conf content ---"
+cat /etc/supervisor/conf.d/microhost.conf
+echo "--- DEBUG: END ---"
+exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
 
