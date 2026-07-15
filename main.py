@@ -11,6 +11,7 @@ from typing import List, Optional
 
 import httpx
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Request, status, Security
+from fastapi.responses import HTMLResponse
 from fastapi.openapi.models import APIKeyIn, APIKey
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
@@ -273,6 +274,310 @@ def check_static_vulnerabilities(file_path: str) -> bool:
         return False
     
 # ================== API Endpoints ==================
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def get_home_page():
+    html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MicroHost API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0f14;
+            --card-bg: rgba(20, 24, 33, 0.6);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary-glow: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --accent-glow: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Abstract glowing blobs for premium feel */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: 0;
+            opacity: 0.15;
+        }
+        body::before {
+            background: #3b82f6;
+            top: 15%;
+            left: 15%;
+        }
+        body::after {
+            background: #8b5cf6;
+            bottom: 15%;
+            right: 15%;
+        }
+
+        .container {
+            z-index: 1;
+            width: 100%;
+            max-width: 680px;
+            padding: 2.5rem;
+            text-align: center;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(59, 130, 246, 0.1);
+        }
+
+        .logo-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
+            background: var(--primary-glow);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            color: white;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .tagline {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .badge-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 99px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .badge:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .badge-pi {
+            border-color: rgba(236, 72, 153, 0.3);
+            background: rgba(236, 72, 153, 0.05);
+            color: #f472b6;
+        }
+
+        .badge-pi:hover {
+            background: rgba(236, 72, 153, 0.1);
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            max-width: 280px;
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary-glow);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #f3f4f6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2.5rem 0;
+            text-align: left;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 1.25rem;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+            color: #ffffff;
+        }
+
+        .feature-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: #a5b4fc;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        footer a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo-container">
+                <span class="logo-icon">⚡</span>
+            </div>
+            <h1>MicroHost</h1>
+            <p class="tagline">A lightweight, highly secure hosting platform for PHP scripts reverse-proxied with FastAPI</p>
+            
+            <div class="badge-container">
+                <span class="badge">🛡️ Malware Scanned</span>
+                <span class="badge">🔌 Sandbox Isolation</span>
+                <span class="badge badge-pi">🍓 Raspberry Pi Optimized</span>
+            </div>
+
+            <div class="features">
+                <div class="feature-item">
+                    <div class="feature-title">🛡️ Built-in Security</div>
+                    <div class="feature-desc">Automatic VirusTotal scans, local ClamAV scans, and static code vulnerability detection.</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">🍓 Resource Efficient</div>
+                    <div class="feature-desc">Minimal memory footprint, runs smoothly on a Raspberry Pi or other low-power nodes.</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">⚡ API First</div>
+                    <div class="feature-desc">Deploy and suspend applications instantly via token-authenticated API endpoints.</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-title">📊 Live Telemetry</div>
+                    <div class="feature-desc">Monitor hardware stats and trace active PHP execution workers in real-time.</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="/docs" class="btn btn-primary">
+                    <span>Explore API Interactive Docs</span>
+                    <span>→</span>
+                </a>
+                <a href="https://www.github.com/amiayon8/microHost" target="_blank" class="btn btn-secondary">
+                    <span>View GitHub Repository</span>
+                </a>
+            </div>
+        </div>
+        <footer>
+            Built with ❤️ for rapid PHP deployments. Learn more on <a href="https://www.github.com/amiayon8/microHost" target="_blank">GitHub</a>.
+        </footer>
+    </div>
+</body>
+</html>"""
+    return HTMLResponse(content=html_content, status_code=200)
 
 @app.post("/register", status_code=status.HTTP_201_CREATED, tags=["Authentication"], summary="Register a new user account")
 @limiter.limit("5/minute")
