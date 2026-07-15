@@ -127,7 +127,6 @@ class UserUpdateAdmin(BaseModel):
     password: Optional[str] = None
     
 class UserUpdateSelf(BaseModel):
-    username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     
@@ -268,7 +267,7 @@ def check_static_vulnerabilities(file_path: str) -> bool:
     
 # ================== API Endpoints ==================
 
-@app.post("/register", status_code=status.HTTP_201_CREATED)
+@app.post("/register", status_code=status.HTTP_201_CREATED, tags=["Authentication"], summary="Register a new user account")
 @limiter.limit("5/minute")
 def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     if db.query(DBUser).filter(DBUser.username == user.username).first():
@@ -288,7 +287,7 @@ def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success", "message": "User created successfully"}
 
-@app.post("/token")
+@app.post("/token", tags=["Authentication"], summary="Authenticate user and generate Bearer JWT token")
 @limiter.limit("10/minute")
 def login_for_access_token(
     request: Request, 
@@ -308,7 +307,7 @@ def login_for_access_token(
     access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.get("/users/me", response_model=UserResponse)
+@app.get("/users/me", response_model=UserResponse, tags=["Users"], summary="Get profile details of the current authenticated user")
 @limiter.limit("10/minute")
 def get_current_user_profile(
     request: Request,
@@ -316,7 +315,7 @@ def get_current_user_profile(
 ):
     return current_user
 
-@app.patch("/users/me")
+@app.patch("/users/me", tags=["Users"], summary="Update profile details (email, password) of the current authenticated user")
 @limiter.limit("10/minute")
 def update_user(
     request: Request,
@@ -324,10 +323,6 @@ def update_user(
     current_user: DBUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if user_update.username:
-        if db.query(DBUser).filter(DBUser.username == user_update.username, DBUser.id != current_user.id).first():
-            raise HTTPException(status_code=400, detail="Username already taken")
-        current_user.username = user_update.username
     if user_update.email:
         if db.query(DBUser).filter(DBUser.email == user_update.email, DBUser.id != current_user.id).first():
             raise HTTPException(status_code=400, detail="Email already taken")
@@ -337,7 +332,7 @@ def update_user(
     db.commit()
     return {"status": "success", "message": "User updated successfully"}
 
-@app.post("/api-keys")
+@app.post("/api-keys", tags=["API Keys"], summary="Generate a new API Key for app uploads")
 @limiter.limit("5/minute")
 def create_api_key(
     request: Request, 
@@ -350,7 +345,7 @@ def create_api_key(
     db.commit()
     return {"api_key": new_key}
 
-@app.post("/upload", response_model=AppResponse)
+@app.post("/upload", response_model=AppResponse, tags=["PHP Apps"], summary="Upload and scan a new PHP application script")
 @limiter.limit("10/minute")
 async def upload_app(
     request: Request,
@@ -398,7 +393,7 @@ async def upload_app(
     db.refresh(new_app)
     return new_app
    
-@app.get("/apps", response_model=List[AppResponse])
+@app.get("/apps", response_model=List[AppResponse], tags=["PHP Apps"], summary="List all hosted PHP applications owned by the user")
 @limiter.limit("50/minute")
 def list_apps(
     request: Request,
@@ -410,12 +405,12 @@ def list_apps(
     apps = db.query(DBApp).filter(DBApp.owner_id == current_user.id).offset(skip).limit(limit).all()
     return apps
 
-@app.get("/health")
+@app.get("/health", tags=["System Status"], summary="Perform service health check")
 @limiter.limit("10/minute")
 def health_check(request: Request):
     return {"status": "healthy"}
 
-@app.get("/server-status")
+@app.get("/server-status", tags=["System Status"], summary="Retrieve server hardware resources and PHP-FPM status info")
 def get_server_status():
 
     cpu_load = psutil.getloadavg()
@@ -449,7 +444,7 @@ def get_server_status():
         }
     }
 
-@app.get("/admin/apps")
+@app.get("/admin/apps", tags=["Admin Apps"], summary="Admin: List all hosted applications in the system")
 def get_all_apps(
     skip: int = 0,
     limit: int = 10,
@@ -459,7 +454,7 @@ def get_all_apps(
     apps = db.query(DBApp).offset(skip).limit(limit).all()
     return apps
 
-@app.delete("/admin/apps/{app_id}")
+@app.delete("/admin/apps/{app_id}", tags=["Admin Apps"], summary="Admin: Permanently delete an application by ID")
 def delete_app(
     app_id: str,
     admin_user: DBUser = Depends(get_admin_user),
@@ -477,7 +472,7 @@ def delete_app(
     db.commit()
     return {"status": "success", "message": f"App {app_id} deleted successfully"}
 
-@app.get("/admin/users", response_model=List[UserResponse])
+@app.get("/admin/users", response_model=List[UserResponse], tags=["Admin Users"], summary="Admin: List all users in the system")
 @limiter.limit("10/minute")
 def get_all_users(
     request: Request,
@@ -489,7 +484,7 @@ def get_all_users(
     users = db.query(DBUser).offset(skip).limit(limit).all()
     return users
 
-@app.patch("/admin/users/{user_id}")
+@app.patch("/admin/users/{user_id}", tags=["Admin Users"], summary="Admin: Edit user account configuration (username, email, roles, status, password)")
 @limiter.limit("20/minute")
 def edit_user(
     request: Request,
@@ -528,7 +523,7 @@ def edit_user(
     db.commit()
     return {"status": "success", "message": f"User {user_id} updated."}
 
-@app.delete("/admin/users/{user_id}")
+@app.delete("/admin/users/{user_id}", tags=["Admin Users"], summary="Admin: Permanently delete a user account and all of their apps")
 @limiter.limit("5/minute")
 def delete_user(
     request: Request,
@@ -552,7 +547,7 @@ def delete_user(
 
     return {"status": "success", "message": "User and all associated apps permanently deleted."}
 
-@app.patch("/admin/apps/{app_id}/status")
+@app.patch("/admin/apps/{app_id}/status", tags=["Admin Apps"], summary="Admin: Enable/suspend hosting of a PHP application by ID")
 @limiter.limit("20/minute")
 def toggle_app_status(
     request: Request,
@@ -585,7 +580,7 @@ def toggle_app_status(
     state = "activated" if status_update.is_active else "suspended"
     return {"status": "success", "message": f"App has been {state}."}
 
-@app.get("/admin/php-workers")
+@app.get("/admin/php-workers", tags=["Admin Telemetry"], summary="Admin: Fetch real-time active PHP-FPM execution telemetry")
 @limiter.limit("10/minute")
 async def get_php_execution_stats(request: Request, admin_user: DBUser = Depends(get_admin_user)):
     """
