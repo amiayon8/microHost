@@ -8,3 +8,4 @@ slowapi
 httpx
 pydantic
 psutil
+email-validator
