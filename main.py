@@ -28,7 +28,13 @@ VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
 DOMAIN = os.getenv("DOMAIN", "YOUR_DOMAIN")
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
-    secret_file = ".jwt_secret"
+    db_url = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+    if db_url.startswith("sqlite:///"):
+        db_path = db_url.replace("sqlite:///", "")
+        db_dir = os.path.dirname(db_path) or "."
+    else:
+        db_dir = "."
+    secret_file = os.path.join(db_dir, ".jwt_secret")
     if os.path.exists(secret_file):
         try:
             with open(secret_file, "r", encoding="utf-8") as f:
@@ -38,6 +44,7 @@ if not SECRET_KEY:
     if not SECRET_KEY:
         SECRET_KEY = secrets.token_hex(32)
         try:
+            os.makedirs(db_dir, exist_ok=True)
             with open(secret_file, "w", encoding="utf-8") as f:
                 f.write(SECRET_KEY)
         except Exception:
