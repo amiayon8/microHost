@@ -50,8 +50,11 @@ UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/var/www/apps")
 
 
 # === DATABASE ===
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
 Base = declarative_base()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -384,6 +387,7 @@ async def upload_app(
 @app.get("/apps", response_model=List[AppResponse])
 @limiter.limit("50/minute")
 def list_apps(
+    request: Request,
     skip: int = 0,
     limit: int = 10,
     current_user: DBUser = Depends(authenticate_api_key),
@@ -394,7 +398,7 @@ def list_apps(
 
 @app.get("/health")
 @limiter.limit("10/minute")
-def health_check():
+def health_check(request: Request):
     return {"status": "healthy"}
 
 @app.get("/server-status")
@@ -610,4 +614,3 @@ async def get_php_execution_stats(request: Request, admin_user: DBUser = Depends
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch FPM telemetry: {str(e)}")
-    
