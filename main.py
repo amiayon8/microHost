@@ -610,3 +610,4 @@ async def get_php_execution_stats(request: Request, admin_user: DBUser = Depends
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch FPM telemetry: {str(e)}")
+    
