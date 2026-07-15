@@ -25,7 +25,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy application files
 COPY main.py /app/main.py
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY supervisord.conf /etc/supervisor/conf.d/microhost.conf
 COPY entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/entrypoint.sh
