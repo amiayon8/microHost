@@ -187,7 +187,7 @@ export default function AppsPage() {
                   </div>
                   {app.is_active && (
                     <a
-                      href={app.url}
+                      href={app.url.startsWith("/") ? `${API_URL}/${app.url}` : app.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 mt-1 font-bold text-main text-xs hover:underline"

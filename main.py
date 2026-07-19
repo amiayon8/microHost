@@ -26,6 +26,7 @@ from slowapi.util import get_remote_address
 # ================== Configuration ==================
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
 DOMAIN = os.getenv("DOMAIN", "YOUR_DOMAIN")
+SERVER_URL = os.getenv("SERVER_URL", "")
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
     db_url = os.getenv("DATABASE_URL", "sqlite:///./test.db")
@@ -554,14 +555,15 @@ async def upload_app(
     current_user: DBUser = Depends(authenticate_api_key), 
     db: Session = Depends(get_db)
 ):
-    if not file.filename.endswith(".php"):
+    safe_filename = os.path.basename(file.filename)
+    if not safe_filename.endswith(".php") or safe_filename == ".php":
         raise HTTPException(status_code=400, detail="Only PHP files are allowed")
     
     import tempfile
     app_id = str(uuid.uuid4())
     temp_dir = os.path.join(tempfile.gettempdir(), app_id)
     os.makedirs(temp_dir, exist_ok=True)
-    temp_file_location = os.path.join(temp_dir, file.filename)
+    temp_file_location = os.path.join(temp_dir, safe_filename)
     
     content = await file.read()
     with open(temp_file_location, "wb") as f:
@@ -586,9 +588,15 @@ async def upload_app(
     shutil.move(temp_file_location, os.path.join(final_dir, "index.php"))
     shutil.rmtree(temp_dir)
     
-    live_url = f"https://{DOMAIN}/{app_id}/index.php"
+    if SERVER_URL:
+        base_url = SERVER_URL.rstrip('/')
+        live_url = f"{base_url}/{app_id}/index.php"
+    else:
+        scheme = request.headers.get("x-forwarded-proto", "http")
+        host = request.headers.get("x-forwarded-host", request.headers.get("host", DOMAIN))
+        live_url = f"{scheme}://{host}/{app_id}/index.php"
     
-    new_app = DBApp(id=app_id, filename=file.filename, url=live_url, owner_id=current_user.id)
+    new_app = DBApp(id=app_id, filename=safe_filename, url=live_url, owner_id=current_user.id)
     db.add(new_app)
     db.commit()
     db.refresh(new_app)

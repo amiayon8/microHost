@@ -556,14 +556,16 @@ export default function AdminPage() {
           </div>
 
           <h3 className="font-heading text-sm uppercase pt-2">
-            Live Process Pipeline
+            Live Processes
           </h3>
 
           {loadingTelemetry && !telemetry ? (
             <div className="text-center py-8 text-sm">
               Intercepting Unix domain socket streams...
             </div>
-          ) : !telemetry || !telemetry.live_execution_stats || telemetry.live_execution_stats.length === 0 ? (
+          ) : !telemetry ||
+            !telemetry.live_execution_stats ||
+            telemetry.live_execution_stats.length === 0 ? (
             <div className="text-center py-12 border-2 border-dashed border-border bg-white text-xs text-muted-foreground">
               No processes currently running in the FPM socket queue.
             </div>

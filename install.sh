@@ -20,11 +20,19 @@ API_PORT=${API_PORT:-8000}
 
 read -p "Enter your VirusTotal API Key (optional): " VT_API_KEY
 
+DEFAULT_SERVER_URL="http://$DOMAIN"
+if [ "$HTTP_PORT" != "80" ]; then
+    DEFAULT_SERVER_URL="http://$DOMAIN:$HTTP_PORT"
+fi
+read -p "Enter the Server URL [default: $DEFAULT_SERVER_URL]: " SERVER_URL
+SERVER_URL=${SERVER_URL:-$DEFAULT_SERVER_URL}
+
 echo
 echo "Configuring MicroHost with:"
 echo "  - Domain: $DOMAIN"
 echo "  - Public HTTP Port: $HTTP_PORT"
 echo "  - Internal API Port: $API_PORT"
+echo "  - Server URL: $SERVER_URL"
 if [ -n "$VT_API_KEY" ]; then
     echo "  - VirusTotal API: Enabled"
 else
@@ -93,12 +101,17 @@ server {
         fastcgi_pass unix:$PHP_FPM_SOCK;
     }
 
-    location ~ \.php\$ {
+    location ~ ^/([a-zA-Z0-9\-]+)/.*\.php\$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:$PHP_FPM_SOCK;
 
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param PHP_ADMIN_VALUE "open_basedir=/var/www/apps/\$1/:/tmp/";
         include fastcgi_params;
+    }
+
+    location ~ \.php\$ {
+        deny all;
     }
 }
 EOF
@@ -119,6 +132,7 @@ User=$REAL_USER
 Group=www-data
 WorkingDirectory=$REAL_HOME/microHost
 Environment=DOMAIN=$DOMAIN
+Environment=SERVER_URL=$SERVER_URL
 $( [ -n "$VT_API_KEY" ] && echo "Environment=VIRUSTOTAL_API_KEY=$VT_API_KEY" )
 ExecStart=$REAL_HOME/microHost/venv/bin/uvicorn main:app --host 127.0.0.1 --port $API_PORT
 Restart=always
