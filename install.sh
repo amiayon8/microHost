@@ -85,6 +85,10 @@ server {
     root /var/www/apps;
     autoindex off;
 
+    client_header_buffer_size 64k;
+    large_client_header_buffers 4 64k;
+    client_max_body_size 100M;
+
     location / {
         proxy_pass http://127.0.0.1:$API_PORT;
         proxy_set_header Host \$host;
