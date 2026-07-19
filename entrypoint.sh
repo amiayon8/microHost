@@ -4,9 +4,16 @@ set -e
 API_PORT="${API_PORT:-8000}"
 DOMAIN="${DOMAIN:-localhost}"
 
+if [ "$API_PORT" = "80" ]; then
+    echo "API_PORT is set to 80, which conflicts with Nginx. Using internal port 8000 for FastAPI."
+    INTERNAL_API_PORT="8000"
+else
+    INTERNAL_API_PORT="$API_PORT"
+fi
+
 sed -i 's/\r$//' /etc/supervisor/conf.d/microhost.conf
 
-sed -i "s/--port 8000/--port $API_PORT/" /etc/supervisor/conf.d/microhost.conf
+sed -i "s/--port 8000/--port $INTERNAL_API_PORT/" /etc/supervisor/conf.d/microhost.conf
 
 PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 echo "Detected PHP Version: $PHP_VERSION"
@@ -32,7 +39,7 @@ server {
     client_max_body_size 100M;
 
     location / {
-        proxy_pass http://127.0.0.1:$API_PORT;
+        proxy_pass http://127.0.0.1:$INTERNAL_API_PORT;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
