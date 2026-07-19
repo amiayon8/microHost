@@ -1,0 +1,24 @@
+# Ignore git and local development directories
+.git
+.gitignore
+.venv
+.vscode
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+test.db
+.jwt_secret
+
+# Ignore app data volumes
+data/
+apps/
+clamav/
+
+# Ignore frontend build caches and dependencies
+microhost-frontend/.next/
+microhost-frontend/node_modules/
+microhost-frontend/out/
+microhost-frontend/build/
+microhost-frontend/.env*.local
