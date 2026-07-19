@@ -6,11 +6,9 @@ import {
   Server,
   Cpu,
   HardDrive,
-  User,
   Plus,
   LogOut,
   RefreshCw,
-  Layers,
   Menu,
   X,
 } from "lucide-react";
@@ -39,7 +37,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       <header className="bg-secondary-background shadow-shadow mb-6 border-4 border-border">
         <div className="flex justify-between items-center mx-auto px-6 max-w-7xl h-16">
           <div className="flex items-center gap-2">
-            <Layers className="w-6 h-6 text-main" />
             <span className="font-heading text-2xl tracking-tighter">
               MICROHOST
             </span>
@@ -48,42 +45,38 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           <nav className="hidden lg:flex items-center gap-6">
             <Link
               href="/dashboard"
-              className={`text-sm font-bold border-b-2 hover:border-foreground transition-all ${
-                pathname === "/dashboard"
-                  ? "border-foreground"
-                  : "border-transparent"
-              }`}
+              className={`text-sm font-bold border-b-2 hover:border-foreground transition-all ${pathname === "/dashboard"
+                ? "border-foreground"
+                : "border-transparent"
+                }`}
             >
               Dashboard
             </Link>
             <Link
               href="/dashboard/apps"
-              className={`text-sm font-bold border-b-2 hover:border-foreground transition-all ${
-                pathname === "/dashboard/apps"
-                  ? "border-foreground"
-                  : "border-transparent"
-              }`}
+              className={`text-sm font-bold border-b-2 hover:border-foreground transition-all ${pathname === "/dashboard/apps"
+                ? "border-foreground"
+                : "border-transparent"
+                }`}
             >
               Apps
             </Link>
             <Link
               href="/dashboard/account"
-              className={`text-sm font-bold border-b-2 hover:border-foreground transition-all ${
-                pathname === "/dashboard/account"
-                  ? "border-foreground"
-                  : "border-transparent"
-              }`}
+              className={`text-sm font-bold border-b-2 hover:border-foreground transition-all ${pathname === "/dashboard/account"
+                ? "border-foreground"
+                : "border-transparent"
+                }`}
             >
               Account
             </Link>
             {user?.is_admin && (
               <Link
                 href="/dashboard/admin"
-                className={`text-sm font-bold border-b-2 hover:border-foreground transition-all ${
-                  pathname === "/dashboard/admin"
-                    ? "border-foreground"
-                    : "border-transparent"
-                }`}
+                className={`text-sm font-bold border-b-2 hover:border-foreground transition-all ${pathname === "/dashboard/admin"
+                  ? "border-foreground"
+                  : "border-transparent"
+                  }`}
               >
                 Admin
               </Link>
@@ -99,7 +92,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 border-2 border-border bg-background hover:bg-neutral-100 transition-all flex items-center justify-center"
+            className="lg:hidden flex justify-center items-center bg-background hover:bg-neutral-100 p-2 border-2 border-border transition-all"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
@@ -161,9 +154,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                             {app.filename}
                           </span>
                           <span
-                            className={`w-2.5 h-2.5 rounded-full border border-border ${
-                              app.is_active ? "bg-green-500" : "bg-red-500"
-                            }`}
+                            className={`w-2.5 h-2.5 rounded-full border border-border ${app.is_active ? "bg-green-500" : "bg-red-500"
+                              }`}
                           ></span>
                         </div>
                         <div className="text-[10px] text-muted-foreground truncate">
@@ -290,19 +282,19 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       </main>
 
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="lg:hidden z-50 fixed inset-0">
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <div className="fixed right-0 top-0 bottom-0 w-64 bg-background border-l-4 border-border p-6 flex flex-col gap-6 shadow-[-4px_0px_0px_0px_var(--border)] animate-in slide-in-from-right duration-200">
-            <div className="flex justify-between items-center pb-4 border-b-2 border-border">
+          <div className="top-0 right-0 slide-in-from-right bottom-0 fixed flex flex-col gap-6 bg-background shadow-[-4px_0px_0px_0px_var(--border)] p-6 border-border border-l-4 w-64 animate-in duration-200">
+            <div className="flex justify-between items-center pb-4 border-border border-b-2">
               <span className="font-heading text-lg tracking-tighter">
                 NAVIGATION
               </span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-1 border-2 border-border bg-background hover:bg-neutral-100"
+                className="bg-background hover:bg-neutral-100 p-1 border-2 border-border"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -312,33 +304,30 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               <Link
                 href="/dashboard"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`text-sm font-bold p-2 border-2 hover:bg-neutral-50 transition-all ${
-                  pathname === "/dashboard"
-                    ? "bg-neutral-100 border-border"
-                    : "border-transparent"
-                }`}
+                className={`text-sm font-bold p-2 border-2 hover:bg-neutral-50 transition-all ${pathname === "/dashboard"
+                  ? "bg-neutral-100 border-border"
+                  : "border-transparent"
+                  }`}
               >
                 Dashboard
               </Link>
               <Link
                 href="/dashboard/apps"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`text-sm font-bold p-2 border-2 hover:bg-neutral-50 transition-all ${
-                  pathname === "/dashboard/apps"
-                    ? "bg-neutral-100 border-border"
-                    : "border-transparent"
-                }`}
+                className={`text-sm font-bold p-2 border-2 hover:bg-neutral-50 transition-all ${pathname === "/dashboard/apps"
+                  ? "bg-neutral-100 border-border"
+                  : "border-transparent"
+                  }`}
               >
                 Apps
               </Link>
               <Link
                 href="/dashboard/account"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`text-sm font-bold p-2 border-2 hover:bg-neutral-50 transition-all ${
-                  pathname === "/dashboard/account"
-                    ? "bg-neutral-100 border-border"
-                    : "border-transparent"
-                }`}
+                className={`text-sm font-bold p-2 border-2 hover:bg-neutral-50 transition-all ${pathname === "/dashboard/account"
+                  ? "bg-neutral-100 border-border"
+                  : "border-transparent"
+                  }`}
               >
                 Account
               </Link>
@@ -346,22 +335,21 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                 <Link
                   href="/dashboard/admin"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-sm font-bold p-2 border-2 hover:bg-neutral-50 transition-all ${
-                    pathname === "/dashboard/admin"
-                      ? "bg-neutral-100 border-border"
-                      : "border-transparent"
-                  }`}
+                  className={`text-sm font-bold p-2 border-2 hover:bg-neutral-50 transition-all ${pathname === "/dashboard/admin"
+                    ? "bg-neutral-100 border-border"
+                    : "border-transparent"
+                    }`}
                 >
                   Admin
                 </Link>
               )}
-              <hr className="border-border border-t-2 my-2" />
+              <hr className="my-2 border-border border-t-2" />
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
                   logout();
                 }}
-                className="flex items-center justify-center gap-1.5 p-2 bg-main text-main-foreground border-2 border-border shadow-[2px_2px_0px_0px_var(--border)] font-bold text-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                className="flex justify-center items-center gap-1.5 bg-main shadow-[2px_2px_0px_0px_var(--border)] hover:shadow-none p-2 border-2 border-border font-bold text-main-foreground text-sm transition-all hover:translate-x-[2px] hover:translate-y-[2px]"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out
