@@ -10,7 +10,11 @@ fi
 
 REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 
-echo "Stopping MicroHost service..."
+echo "Stopping MicroHost services..."
+
+sudo systemctl stop microhost-frontend.service 2>/dev/null || true
+sudo systemctl disable microhost-frontend.service 2>/dev/null || true
+sudo rm -f /etc/systemd/system/microhost-frontend.service
 
 sudo systemctl stop microhost.service 2>/dev/null || true
 sudo systemctl disable microhost.service 2>/dev/null || true

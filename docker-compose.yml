@@ -9,10 +9,23 @@ services:
     environment:
       - DOMAIN=${DOMAIN}
       - API_PORT=${API_PORT}
-      - SERVER_URL=https://${DOMAIN}
+      - SERVER_URL=${SERVER_URL:-https://${DOMAIN}}
       - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY}
+      - CONSOLE_URL=${CONSOLE_URL:-http://${DOMAIN}:3000}
     volumes:
       - ./data:/app/data
       - ./apps:/var/www/apps
       - ./clamav:/var/lib/clamav
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./microhost-frontend
+      args:
+        - NEXT_PUBLIC_API_URL=${SERVER_URL:-https://${DOMAIN}}
+    container_name: microhost-frontend
+    expose:
+      - 3000
+    environment:
+      - NEXT_PUBLIC_API_URL=${SERVER_URL:-https://${DOMAIN}}
     restart: unless-stopped

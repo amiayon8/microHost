@@ -27,6 +27,7 @@ from slowapi.util import get_remote_address
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
 DOMAIN = os.getenv("DOMAIN", "YOUR_DOMAIN")
 SERVER_URL = os.getenv("SERVER_URL", "")
+CONSOLE_URL = os.getenv("CONSOLE_URL", "")
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
     db_url = os.getenv("DATABASE_URL", "sqlite:///./test.db")
@@ -295,6 +296,10 @@ def check_static_vulnerabilities(file_path: str) -> bool:
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def get_home_page():
+    console_button = ""
+    if CONSOLE_URL:
+        console_button = f'\n            <a href="{CONSOLE_URL}" class="btn" target="_blank">Open Console</a>'
+
     html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -462,6 +467,8 @@ def get_home_page():
     </div>
 </body>
 </html>"""
+    github_link = '<a href="https://github.com/amiayon8/microHost" class="btn">GitHub Repo</a>'
+    html_content = html_content.replace(github_link, f"{console_button}\n            {github_link}")
     return HTMLResponse(content=html_content, status_code=200)
 
 @app.post("/register", status_code=status.HTTP_201_CREATED, tags=["Authentication"], summary="Register a new user account")

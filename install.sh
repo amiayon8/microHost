@@ -27,6 +27,9 @@ fi
 read -p "Enter the Server URL [default: $DEFAULT_SERVER_URL]: " SERVER_URL
 SERVER_URL=${SERVER_URL:-$DEFAULT_SERVER_URL}
 
+read -p "Do you want to install and deploy the Next.js frontend? [y/N]: " INSTALL_FRONTEND
+INSTALL_FRONTEND=${INSTALL_FRONTEND:-n}
+
 echo
 echo "Configuring MicroHost with:"
 echo "  - Domain: $DOMAIN"
@@ -38,11 +41,20 @@ if [ -n "$VT_API_KEY" ]; then
 else
     echo "  - VirusTotal API: Disabled"
 fi
+if [[ "$INSTALL_FRONTEND" =~ ^[yY](es)?$ ]]; then
+    echo "  - Install Frontend: Yes"
+else
+    echo "  - Install Frontend: No"
+fi
 echo
 
 echo "Updating system and installing dependencies..."
 sudo apt update && sudo apt upgrade -y
-sudo apt install nginx php-fpm clamav clamav-daemon python3-pip python3-venv -y
+INSTALL_PACKAGES="nginx php-fpm clamav clamav-daemon python3-pip python3-venv"
+if [[ "$INSTALL_FRONTEND" =~ ^[yY](es)?$ ]]; then
+    INSTALL_PACKAGES="$INSTALL_PACKAGES nodejs npm"
+fi
+sudo apt install $INSTALL_PACKAGES -y
 
 echo "Configuring ClamAV Antivirus..."
 sudo systemctl stop clamav-freshclam
@@ -67,6 +79,20 @@ python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
+
+if [[ "$INSTALL_FRONTEND" =~ ^[yY](es)?$ ]]; then
+    echo "Copying frontend files..."
+    rm -rf "$REAL_HOME/microHost/microhost-frontend"
+    cp -r "$SCRIPT_DIR/microhost-frontend" "$REAL_HOME/microHost/"
+    rm -rf "$REAL_HOME/microHost/microhost-frontend/node_modules"
+    rm -rf "$REAL_HOME/microHost/microhost-frontend/.next"
+    
+    echo "Installing frontend dependencies and building Next.js application..."
+    cd "$REAL_HOME/microHost/microhost-frontend"
+    export NEXT_PUBLIC_API_URL="$SERVER_URL"
+    npm install
+    npm run build
+fi
 
 PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 echo "Detected PHP Version: $PHP_VERSION"
@@ -137,6 +163,7 @@ Group=www-data
 WorkingDirectory=$REAL_HOME/microHost
 Environment=DOMAIN=$DOMAIN
 Environment=SERVER_URL=$SERVER_URL
+Environment=CONSOLE_URL=http://$DOMAIN:3000
 $( [ -n "$VT_API_KEY" ] && echo "Environment=VIRUSTOTAL_API_KEY=$VT_API_KEY" )
 ExecStart=$REAL_HOME/microHost/venv/bin/uvicorn main:app --host 127.0.0.1 --port $API_PORT
 Restart=always
@@ -149,4 +176,30 @@ sudo systemctl daemon-reload
 sudo systemctl enable microhost.service
 sudo systemctl restart microhost.service
 
-echo "Installation and configuration complete. API reverse-proxied through Nginx on http://$DOMAIN:$HTTP_PORT"
+if [[ "$INSTALL_FRONTEND" =~ ^[yY](es)?$ ]]; then
+    echo "Creating Systemd service for Next.js frontend..."
+    NPM_PATH=$(command -v npm)
+    sudo tee /etc/systemd/system/microhost-frontend.service > /dev/null << EOF
+[Unit]
+Description=MicroHost Next.js Frontend
+After=network.target
+
+[Service]
+User=$REAL_USER
+WorkingDirectory=$REAL_HOME/microHost/microhost-frontend
+Environment=NEXT_PUBLIC_API_URL=$SERVER_URL
+Environment=PORT=3000
+ExecStart=$NPM_PATH start
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable microhost-frontend.service
+    sudo systemctl restart microhost-frontend.service
+    echo "Installation and configuration complete. API reverse-proxied through Nginx on http://$DOMAIN:$HTTP_PORT, Frontend running at http://$DOMAIN:3000"
+else
+    echo "Installation and configuration complete. API reverse-proxied through Nginx on http://$DOMAIN:$HTTP_PORT"
+fi
