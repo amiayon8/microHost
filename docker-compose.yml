@@ -16,6 +16,9 @@ services:
       - ./data:/app/data
       - ./apps:/var/www/apps
       - ./clamav:/var/lib/clamav
+    networks:
+      - dokploy-network
+      - default
     restart: unless-stopped
 
   frontend:
@@ -28,4 +31,11 @@ services:
       - 3000
     environment:
       - NEXT_PUBLIC_API_URL=${SERVER_URL:-https://${DOMAIN}}
+    networks:
+      - dokploy-network
+      - default
     restart: unless-stopped
+
+networks:
+  dokploy-network:
+    external: true
