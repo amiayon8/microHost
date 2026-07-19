@@ -7,10 +7,10 @@ services:
     ports:
       - "80:80"
     environment:
-      - DOMAIN=localhost
+      - DOMAIN=${DOMAIN}
       - API_PORT=80
-      - SERVER_URL=http://localhost
-      - VIRUSTOTAL_API_KEY=
+      - SERVER_URL=https://${DOMAIN}
+      - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY}
     volumes:
       - ./data:/app/data
       - ./apps:/var/www/apps
