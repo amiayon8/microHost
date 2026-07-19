@@ -16,7 +16,7 @@ from fastapi.openapi.models import APIKeyIn, APIKey
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Boolean, func
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, Session
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -480,17 +480,24 @@ def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), 
     db: Session = Depends(get_db)
 ):
-    # Allow logging in with either username or email
+    # Convert the incoming login string to lowercase
+    login_str = form_data.username.lower()
+
+    # Query DB converting stored username/email to lowercase for comparison
     user = db.query(DBUser).filter(
-        (DBUser.username == form_data.username) | (DBUser.email == form_data.username)
+        (func.lower(DBUser.username) == login_str) | 
+        (func.lower(DBUser.email) == login_str)
     ).first()
+
     if not user or not pwd_context.verify(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username, email, or password")
+    
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Your account has been blocked. Please contact support.")
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
+    
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/users/me", response_model=UserResponse, tags=["Users"], summary="Get profile details of the current authenticated user")
