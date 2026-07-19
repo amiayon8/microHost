@@ -8,8 +8,8 @@ import psutil
 import secrets
 from datetime import datetime, timedelta
 from typing import List, Optional
-
 import httpx
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Request, status, Security
 from fastapi.responses import HTMLResponse
 from fastapi.openapi.models import APIKeyIn, APIKey
@@ -69,6 +69,13 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # === Rate Limiter ===
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="MicroHost API", description="MicroHost API for hosting PHP Scripts", version="1.0.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=False)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
