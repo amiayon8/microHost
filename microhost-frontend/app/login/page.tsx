@@ -65,7 +65,7 @@ export default function Login() {
     };
 
     return (
-        <div className="flex flex-col flex-1 justify-start items-center bg-white px-2 sm:px-8 py-10 w-full max-w-lg h-full font-sans">
+        <div className="flex flex-col flex-1 justify-start items-center bg-white px-2 sm:px-8 py-10 border-2 w-full max-w-lg h-full font-sans">
             <h1 className="font-bold text-2xl header">MicroHost</h1>
             <h2 className="text-gray-500 text-lg subtitle">Login</h2>
             <div className="mt-2 mb-6 border-gray-200 border-b w-full max-w-md"></div>

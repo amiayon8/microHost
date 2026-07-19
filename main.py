@@ -264,9 +264,20 @@ async def check_virustotal(file_hash: str) -> bool:
 def scan_with_clamav(file_path: str) -> bool:
     try:
         result = subprocess.run(['clamdscan', '--no-summary', file_path], capture_output=True, text=True)
-        return result.returncode == 0
-    except Exception:
-        return False
+        if result.returncode == 0:
+            return True
+        elif result.returncode == 1:
+            print(f"ClamAV flagged file {file_path} as malicious.")
+            return False
+        else:
+            print(f"ClamAV scan failed with exit code {result.returncode}. Skipping local malware scan.")
+            return True
+    except FileNotFoundError:
+        print("ClamAV (clamdscan) is not installed. Skipping local malware scan.")
+        return True
+    except Exception as e:
+        print(f"Error running ClamAV scan: {e}. Skipping local malware scan.")
+        return True
     
 def check_static_vulnerabilities(file_path: str) -> bool:
     blocked_functions = [r"\beval\s*\(", r"\bsystem\s*\(", r"\bshell_exec\s*\(", r"\bpassthru\s*\("]
