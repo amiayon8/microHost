@@ -25,10 +25,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased p-4 sm:p-8`}
     >
       <body className="flex flex-col min-h-full">{children}
-        <Toaster /></body>
+        <Toaster />
+      </body>
     </html>
   );
 }

@@ -12,9 +12,8 @@ import httpx
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Request, status, Security
 from fastapi.responses import HTMLResponse
-from fastapi.openapi.models import APIKeyIn, APIKey
 from fastapi.openapi.utils import get_openapi
-from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import APIKeyHeader, OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Boolean, func
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, Session
@@ -480,10 +479,8 @@ def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), 
     db: Session = Depends(get_db)
 ):
-    # Convert the incoming login string to lowercase
     login_str = form_data.username.lower()
 
-    # Query DB converting stored username/email to lowercase for comparison
     user = db.query(DBUser).filter(
         (func.lower(DBUser.username) == login_str) | 
         (func.lower(DBUser.email) == login_str)
