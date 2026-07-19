@@ -4,8 +4,8 @@ services:
   microhost:
     build: .
     container_name: microhost
-    ports:
-      - "80:80"
+    expose:
+      - 80
     environment:
       - DOMAIN=${DOMAIN}
       - API_PORT=80
